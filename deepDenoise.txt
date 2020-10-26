@@ -1,0 +1,78 @@
+
+NOTES
+
+Reading the paper : Beyond a Gaussian Denoiser:Residual Learning of Deep CNN for image denoising.
+
+GOAL of image denoising :
+Derive a clean image x from a noisy image y which follows a degradation model : y = x + v ; v = noise
+
+Aim is to implicitly remove the clean image and learn v . 
+
+This can also be used in image super resolution problem where can see v to be the difference between the 
+groud truth high res image and the bicubic upsampling of a low resolution image , similarly JPEG image 
+deblocking problem can also be solved by taking v as the difference between the original image and the
+compressed image.
+
+Section III
+============
+Proposed model :
+ training a Deep CNN involves 2 tasks: 
+    > Network architecture and design
+    > Model learning and training data ( adopt Residual-Learning with batch normalization )
+
+A. Network Depth
+-----------------
+    > filter size : 3 x 3 and remove all pooling layers
+    > Receptive field of DnCNN of depth d should be (2d + 1) x (2d + 1)  // why ? what is this ?
+
+B. Network Architecture
+-----------------------
+    Generally Denoising algorithms tend to try to learn a mapping function such as F(y) = x to learn the 
+clean image x , but here we adopt residual learning , we want to map R(y) = v and then we can get the clean
+image by doing: x = y - R(y)
+
+LOSS FUNCTION : averaged mean square error between the desired residual image and estimated ones from noisy input
+
+Given we have a net of depth D we are gonna have 3 types of layers :
+    1) Conv + Relu : 
+        > This is the first layer 
+        > has 64 filters of (3 x 3 x c)
+
+    2) Conv + BN + Relu :
+        > from layer 2 till layer (D-1)
+        > 64 filters of size (3 x 3)
+        > do Batch Norm after Conv and before ReLU
+    
+    3) Conv
+        > Last Later
+        > 'c' number of filters of size (3 x 3 x 64) is used to recostruct the output
+
+    * Reducing Boundry artifacts
+        > zero pad intermediate layers so as to retain the original size as input image
+
+EXPERIMENTAL RESULTS AS MENTIONED BY THE AUTHORS OF THE PAPER
+> Training and Testing Data:
+    TRAIN
+        DnCNN-S (S for specific noise level)
+        > 400 images of 180 x 180 for training
+        > considered noise levels of sigma = 15,25,50
+        > patch size = (40 x 40)
+        > crop = (128 x 1)
+        > 600 patches to train the model
+
+        DnCNN-B (B for blind noise level)
+        > noise levels sigma = [0,55]
+        > patch size = (50 x 50)
+        > crop = (128 x 3000)
+    
+    > data-augmentation : rotate/flip pairs within mini-batch
+    
+    > depth = 17(DnCNN-S) , 20 (DnCNN-B)
+
+    > SGD with decay = 0.0001 , momentum = 0.9 , mini-batch size =128
+
+    >epoch = 50
+
+    > lr = 1e-1 to 1e-4 over the 50 epoch
+
+
